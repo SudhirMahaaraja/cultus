@@ -1,4 +1,4 @@
-// @maintained 2026-09-25T14:46:30.204Z
+// @maintained 2026-09-26T06:58:24.063Z
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
