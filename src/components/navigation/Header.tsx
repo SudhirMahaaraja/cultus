@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
           <Sparkles className="w-3.5 h-3.5 text-[#fdaa8f] dark:text-[#5ce3e6] animate-pulse" />
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-sm tracking-tight text-[#171c23] dark:text-white font-[Plus_Jakarta_Sans] leading-none">
+          <span className="font-bold text-sm tracking-tight text-[#171c23] dark:text-white font-mono leading-none">
             Cultus
           </span>
           <span className="text-[9px] font-semibold tracking-wider text-[#74777f] dark:text-[#8aa4cf] mt-0.5">

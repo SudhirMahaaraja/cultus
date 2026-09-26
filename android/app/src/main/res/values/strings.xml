@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cultus</string>
+    <string name="title_activity_main">Cultus</string>
+    <string name="package_name">com.cultus.app</string>
+    <string name="custom_url_scheme">com.cultus.app</string>
+</resources>
