@@ -27,6 +27,20 @@ export const AIRationaleCard: React.FC<AIRationaleCardProps> = ({ candidate, rat
         &ldquo;{rationaleText || candidate.aiReason}&rdquo;
       </p>
 
+      {/* Practical How To Wear Styling Tips */}
+      {candidate.howToWear && candidate.howToWear.length > 0 && (
+        <div className="mt-3 pt-2.5 border-t border-[#dee2ec] dark:border-[#5ce3e6]/20">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#43474e] dark:text-[#5ce3e6] block mb-1">
+            Styling &amp; Presentation Tips
+          </span>
+          <ul className="list-disc list-inside space-y-0.5 text-[11px] text-[#171c23] dark:text-slate-200">
+            {candidate.howToWear.map((tip, idx) => (
+              <li key={idx} className="leading-snug">{tip}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Tonal Harmony Visual Spectrum */}
       <div className="pt-2 border-t border-[#dee2ec] dark:border-[#5ce3e6]/20 grid grid-cols-2 gap-3 text-[11px]">
         <div className="flex items-center gap-2">

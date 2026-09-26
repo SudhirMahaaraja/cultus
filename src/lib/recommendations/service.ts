@@ -165,7 +165,16 @@ export async function generateDailyRecommendation(
       wardrobeVariety * 0.10 +
       recencyScore * 0.10;
 
-    return { ...candidate, aiScore: visualScore, aiReason, finalScore };
+    return {
+      ...candidate,
+      aiScore: visualScore,
+      aiReason,
+      presentationAppeal: aiData?.presentationAppeal,
+      rotationFreshness: aiData?.rotationFreshness,
+      howToWear: aiData?.howToWear,
+      issues: aiData?.issues,
+      finalScore,
+    };
   });
 
   rankedCandidates.sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
@@ -181,6 +190,7 @@ export async function generateDailyRecommendation(
     outfit: topOutfit,
     alternatives,
     rationale: aiResult.topRationale || topOutfit.aiReason || 'Recommended for optimal executive presence.',
+    topHowToWear: aiResult.topHowToWear,
     meta: {
       modelUsed: aiResult.modelUsed,
       totalCandidatesEvaluated: eligibleCandidates.length,

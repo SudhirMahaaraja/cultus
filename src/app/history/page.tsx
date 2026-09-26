@@ -73,16 +73,16 @@ export default function HistoryPage() {
   };
 
   return (
-    <SartorialBackground>
+    <>
       <Header />
 
       <main className="flex-1 w-full px-4 pt-4 flex flex-col items-center">
         <div className="w-full flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-semibold text-[#171c23]">
+            <h2 className="text-base font-semibold text-[#171c23] dark:text-white">
               Outfit Calendar &amp; Rotation Memory
             </h2>
-            <p className="text-xs text-[#43474e]">
+            <p className="text-xs text-[#43474e] dark:text-slate-300">
               Monday–Friday wear log &amp; preference rules
             </p>
           </div>
@@ -98,6 +98,6 @@ export default function HistoryPage() {
       </main>
 
       <BottomNav />
-    </SartorialBackground>
+    </>
   );
 }

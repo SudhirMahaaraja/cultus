@@ -4,11 +4,19 @@ export interface GarmentAIAnalysis {
   category: GarmentCategory;
   dominant_colors: string[];
   secondary_colors: string[];
+  color_temperature?: 'warm' | 'cool' | 'neutral' | 'mixed' | 'unclear';
   pattern: string;
+  pattern_scale?: 'none' | 'micro' | 'small' | 'medium' | 'large' | 'unclear';
+  texture?: 'smooth' | 'fine_texture' | 'textured' | 'heavy_texture' | 'unclear';
+  silhouette?: 'structured' | 'tailored' | 'straight' | 'tapered' | 'relaxed' | 'oversized' | 'unclear';
   style: string;
   fit: string;
   sleeve?: string;
   office_suitability: number; // 0.0 - 1.0
+  formal_meeting_suitability?: number;
+  climate_practicality?: number;
+  rotation_versatility?: number;
+  condition?: 'pristine' | 'good' | 'wrinkled' | 'stained_or_damaged' | 'worn' | 'unclear';
   visual_summary: string;
   confidence: number;
 }
@@ -80,6 +88,10 @@ export interface RecommendationCandidate {
   isBlocked: boolean;
   aiScore?: number;
   aiReason?: string;
+  presentationAppeal?: number;
+  rotationFreshness?: number;
+  howToWear?: string[];
+  issues?: string[];
   finalScore?: number;
 }
 
@@ -87,6 +99,7 @@ export interface RecommendationResponse {
   outfit: RecommendationCandidate;
   alternatives: RecommendationCandidate[];
   rationale: string;
+  topHowToWear?: string[];
   meta: {
     modelUsed: string;
     totalCandidatesEvaluated: number;

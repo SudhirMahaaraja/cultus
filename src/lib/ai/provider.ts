@@ -9,8 +9,16 @@ export interface VisionProvider {
     candidates: RecommendationCandidate[],
     context: { meetingStatus: 'yes' | 'no'; recentOutfitsText: string }
   ): Promise<{
-    rankings: Map<string, { score: number; rationale: string }>;
+    rankings: Map<string, {
+      score: number;
+      rationale: string;
+      presentationAppeal?: number;
+      rotationFreshness?: number;
+      howToWear?: string[];
+      issues?: string[];
+    }>;
     topRationale: string;
+    topHowToWear?: string[];
     modelUsed: string;
   }>;
 }
@@ -85,8 +93,9 @@ Recent Wear History (Avoid repeating recent combinations): ${context.recentOutfi
 
 For each candidate, evaluate visual color harmony, fabric contrast, formality suitability, and wear rotation.
 Return a JSON object with:
-"rankings": array of { "candidateId": "string", "score": 0.0 to 1.0, "rationale": "1-sentence executive reasoning" },
-"topRationale": "Overall recommendation summary"
+"rankings": array of { "candidateId": "string", "score": 0.0 to 1.0, "presentationAppeal": 0.0 to 1.0, "rotationFreshness": 0.0 to 1.0, "rationale": "1-sentence executive reasoning", "howToWear": ["instruction 1"], "issues": ["issue 1"] },
+"topRationale": "Overall recommendation summary",
+"topHowToWear": ["practical wearing instruction 1", "practical wearing instruction 2"]
 
 Candidates:
 ${candidates
@@ -125,7 +134,14 @@ ${candidates
     }
 
     const parsed = JSON.parse(content);
-    const rankingsMap = new Map<string, { score: number; rationale: string }>();
+    const rankingsMap = new Map<string, {
+      score: number;
+      rationale: string;
+      presentationAppeal?: number;
+      rotationFreshness?: number;
+      howToWear?: string[];
+      issues?: string[];
+    }>();
 
     if (Array.isArray(parsed.rankings)) {
       parsed.rankings.forEach((item: any) => {
@@ -134,6 +150,10 @@ ${candidates
           rankingsMap.set(item.candidateId, {
             score: Math.min(1.0, Math.max(0.0, rawScore)),
             rationale: item.rationale || 'Executive combination.',
+            presentationAppeal: typeof item.presentationAppeal === 'number' ? item.presentationAppeal : undefined,
+            rotationFreshness: typeof item.rotationFreshness === 'number' ? item.rotationFreshness : undefined,
+            howToWear: Array.isArray(item.howToWear) ? item.howToWear : undefined,
+            issues: Array.isArray(item.issues) ? item.issues : undefined,
           });
         }
       });
@@ -142,6 +162,7 @@ ${candidates
     return {
       rankings: rankingsMap,
       topRationale: parsed.topRationale || 'Optimal executive combination.',
+      topHowToWear: Array.isArray(parsed.topHowToWear) ? parsed.topHowToWear : undefined,
       modelUsed: `${this.deployment} (Azure OpenAI)`,
     };
   }

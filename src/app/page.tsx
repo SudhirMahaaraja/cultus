@@ -86,7 +86,7 @@ export default function HomePage() {
   };
 
   return (
-    <SartorialBackground>
+    <>
       <Header />
 
       <main className="flex-1 w-full px-4 pt-4 flex flex-col items-center">
@@ -99,12 +99,12 @@ export default function HomePage() {
 
         {/* Outfit Recommendation Section */}
         {isLoading ? (
-          <div className="w-full bg-white border border-[#e2e6ea] rounded-3xl p-8 shadow-level-2 flex flex-col items-center justify-center text-center my-4 min-h-[360px]">
-            <Sparkles className="w-8 h-8 text-[#9e5a44] animate-spin mb-3" />
-            <h3 className="text-sm font-semibold text-[#1e3a5f]">
+          <div className="w-full bg-white/85 dark:bg-[#0d1726]/85 border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-3xl p-8 shadow-level-2 flex flex-col items-center justify-center text-center my-4 min-h-[360px] backdrop-blur-md">
+            <Sparkles className="w-8 h-8 text-[#9e5a44] dark:text-[#5ce3e6] animate-spin mb-3" />
+            <h3 className="text-sm font-semibold text-[#1e3a5f] dark:text-[#5ce3e6]">
               Analyzing Wardrobe Vision Intelligence...
             </h3>
-            <p className="text-xs text-[#43474e] mt-1 max-w-xs">
+            <p className="text-xs text-[#43474e] dark:text-slate-300 mt-1 max-w-xs">
               Evaluating garment photographs, rotation recency, and executive formality parameters.
             </p>
           </div>
@@ -128,19 +128,19 @@ export default function HomePage() {
             />
           </div>
         ) : (
-          <div className="w-full bg-white border border-[#e2e6ea] rounded-3xl p-8 shadow-level-2 flex flex-col items-center justify-center text-center my-4 min-h-[320px]">
-            <div className="w-16 h-16 rounded-full bg-[#1e3a5f]/10 text-[#1e3a5f] flex items-center justify-center mb-4">
+          <div className="w-full bg-white/85 dark:bg-[#0d1726]/85 border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-3xl p-8 shadow-level-2 flex flex-col items-center justify-center text-center my-4 min-h-[320px] backdrop-blur-md">
+            <div className="w-16 h-16 rounded-full bg-[#1e3a5f]/10 dark:bg-[#5ce3e6]/10 text-[#1e3a5f] dark:text-[#5ce3e6] flex items-center justify-center mb-4">
               <Shirt className="w-8 h-8" />
             </div>
-            <h3 className="text-base font-semibold text-[#171c23]">
+            <h3 className="text-base font-semibold text-[#171c23] dark:text-white">
               Your Wardrobe is Empty
             </h3>
-            <p className="text-xs text-[#43474e] mt-2 mb-6 max-w-xs leading-relaxed">
+            <p className="text-xs text-[#43474e] dark:text-slate-300 mt-2 mb-6 max-w-xs leading-relaxed">
               Capture or upload garment photographs to analyze their style attributes and generate AI sartorial outfit recommendations.
             </p>
             <Link
               href="/add"
-              className="py-3.5 px-6 rounded-full bg-[#1e3a5f] text-white font-semibold text-xs flex items-center gap-2 shadow-level-1 hover:bg-[#022448] transition-all"
+              className="py-3.5 px-6 rounded-full bg-[#1e3a5f] dark:bg-[#5ce3e6] text-white dark:text-[#070f1c] font-semibold text-xs flex items-center gap-2 shadow-level-1 hover:bg-[#022448] dark:hover:bg-[#38c9cd] transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Add Your First Garment</span>
@@ -150,6 +150,6 @@ export default function HomePage() {
       </main>
 
       <BottomNav />
-    </SartorialBackground>
+    </>
   );
 }

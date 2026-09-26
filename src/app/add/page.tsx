@@ -147,7 +147,7 @@ export default function AddGarmentPage() {
   };
 
   return (
-    <SartorialBackground>
+    <>
       <Header />
 
       <main className="flex-1 w-full px-4 pt-4 flex flex-col items-center">
@@ -165,20 +165,20 @@ export default function AddGarmentPage() {
 
         {!imagePreview ? (
           /* Step A: Camera Capture & Upload Surface */
-          <div className="w-full bg-white border border-[#e2e6ea] rounded-3xl p-5 shadow-level-2 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-full bg-[#1e3a5f]/10 text-[#1e3a5f] flex items-center justify-center mb-3">
+          <div className="w-full bg-white/85 dark:bg-[#0d1726]/85 border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-3xl p-5 shadow-level-2 flex flex-col items-center text-center backdrop-blur-md">
+            <div className="w-16 h-16 rounded-full bg-[#1e3a5f]/10 dark:bg-[#5ce3e6]/10 text-[#1e3a5f] dark:text-[#5ce3e6] flex items-center justify-center mb-3">
               <Camera className="w-8 h-8" />
             </div>
 
-            <h2 className="text-base font-semibold text-[#171c23]">
+            <h2 className="text-base font-semibold text-[#171c23] dark:text-white">
               Capture Clothing Photograph
             </h2>
-            <p className="text-xs text-[#43474e] mt-1 max-w-xs leading-relaxed">
+            <p className="text-xs text-[#43474e] dark:text-slate-300 mt-1 max-w-xs leading-relaxed">
               Position your garment flat or on a hanger. AI will analyze the actual image attributes for sartorial compatibility.
             </p>
 
             {/* Custom File Upload Button */}
-            <label className="w-full mt-5 py-3.5 px-4 rounded-full bg-[#1e3a5f] text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-level-1 hover:bg-[#022448] transition-all">
+            <label className="w-full mt-5 py-3.5 px-4 rounded-full bg-[#1e3a5f] dark:bg-[#5ce3e6] text-white dark:text-[#070f1c] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-level-1 hover:bg-[#022448] dark:hover:bg-[#38c9cd] transition-all">
               <Upload className="w-4 h-4" />
               <span>Choose / Take Photo</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
@@ -186,43 +186,43 @@ export default function AddGarmentPage() {
           </div>
         ) : (
           /* Step B: Automatic AI Vision Extraction Preview & Metadata Editing */
-          <div className="w-full bg-white border border-[#e2e6ea] rounded-3xl p-5 shadow-level-2 flex flex-col gap-4 animate-fade-in">
-            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#f0f2f5] border border-[#e2e6ea]">
+          <div className="w-full bg-white/85 dark:bg-[#0d1726]/85 border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-3xl p-5 shadow-level-2 flex flex-col gap-4 animate-fade-in backdrop-blur-md">
+            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#f0f2f5] dark:bg-[#0f1c2e] border border-[#e2e6ea] dark:border-[#5ce3e6]/20">
               <Image src={imagePreview} alt="Captured garment" fill className="object-cover" />
-              <div className="absolute top-3 left-3 px-3 py-1 rounded-full glass-pill text-xs font-semibold text-[#171c23] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#9e5a44]" />
+              <div className="absolute top-3 left-3 px-3 py-1 rounded-full glass-pill text-xs font-semibold text-[#171c23] dark:text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#9e5a44] dark:text-[#5ce3e6]" />
                 {isAnalyzing ? 'Analyzing Garment Photography...' : 'AI Vision Extracted'}
               </div>
             </div>
 
             {isAnalyzing ? (
-              <div className="py-6 text-center text-xs text-[#1e3a5f] font-semibold animate-pulse flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#9e5a44] animate-spin" />
+              <div className="py-6 text-center text-xs text-[#1e3a5f] dark:text-[#5ce3e6] font-semibold animate-pulse flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#9e5a44] dark:text-[#5ce3e6] animate-spin" />
                 <span>Extracting fabric weave, formality, color palette &amp; cut...</span>
               </div>
             ) : (
               aiResult && (
                 <>
                   {/* Image-Authoritative AI Banner */}
-                  <div className="bg-[#f0f4fd] p-3 rounded-2xl border border-[#e2e6ea] flex items-start gap-2 text-xs">
-                    <ShieldCheck className="w-4 h-4 text-[#1e3a5f] shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-[#43474e] leading-relaxed">
+                  <div className="bg-[#f0f4fd] dark:bg-[#15253b] p-3 rounded-2xl border border-[#e2e6ea] dark:border-[#5ce3e6]/20 flex items-start gap-2 text-xs">
+                    <ShieldCheck className="w-4 h-4 text-[#1e3a5f] dark:text-[#5ce3e6] shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-[#43474e] dark:text-slate-300 leading-relaxed">
                       Recommendations analyze garment photographs and do not use filenames or text labels to determine visual compatibility.
                     </p>
                   </div>
 
                   {/* AI Extracted Attributes */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 bg-[#f8f9fa] rounded-xl border border-[#e2e6ea]">
-                      <span className="text-[10px] text-[#43474e] block uppercase font-semibold">Category</span>
-                      <span className="font-semibold text-[#171c23] capitalize">
+                    <div className="p-2.5 bg-[#f8f9fa] dark:bg-[#15253b] rounded-xl border border-[#e2e6ea] dark:border-[#5ce3e6]/20">
+                      <span className="text-[10px] text-[#43474e] dark:text-slate-400 block uppercase font-semibold">Category</span>
+                      <span className="font-semibold text-[#171c23] dark:text-white capitalize">
                         {aiResult.category.replace('_', ' ')}
                       </span>
                     </div>
 
-                    <div className="p-2.5 bg-[#f8f9fa] rounded-xl border border-[#e2e6ea]">
-                      <span className="text-[10px] text-[#43474e] block uppercase font-semibold">Formality Rating</span>
-                      <span className="font-semibold text-[#9e5a44]">
+                    <div className="p-2.5 bg-[#f8f9fa] dark:bg-[#15253b] rounded-xl border border-[#e2e6ea] dark:border-[#5ce3e6]/20">
+                      <span className="text-[10px] text-[#43474e] dark:text-slate-400 block uppercase font-semibold">Formality Rating</span>
+                      <span className="font-semibold text-[#9e5a44] dark:text-[#fdaa8f]">
                         {(aiResult.officeSuitability * 10).toFixed(1)} / 10
                       </span>
                     </div>
@@ -230,28 +230,28 @@ export default function AddGarmentPage() {
 
                   {/* Editable Display Name */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#171c23]">
+                    <label className="text-xs font-semibold text-[#171c23] dark:text-white">
                       Garment Display Name (Editable)
                     </label>
                     <input
                       type="text"
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
-                      className="w-full h-11 px-3.5 bg-[#f8f9fa] border border-[#e2e6ea] rounded-xl text-xs text-[#171c23] font-semibold focus:outline-none focus:border-[#1e3a5f]"
+                      className="w-full h-11 px-3.5 bg-[#f8f9fa] dark:bg-[#15253b] border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-xl text-xs text-[#171c23] dark:text-white font-semibold focus:outline-none focus:border-[#1e3a5f] dark:focus:border-[#5ce3e6]"
                     />
                   </div>
 
                   {/* Formal Meeting Eligibility Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-[#f8f9fa] rounded-xl border border-[#e2e6ea]">
+                  <div className="flex items-center justify-between p-3 bg-[#f8f9fa] dark:bg-[#15253b] rounded-xl border border-[#e2e6ea] dark:border-[#5ce3e6]/20">
                     <div>
-                      <span className="text-xs font-semibold text-[#171c23] block">Formal Meeting Eligible</span>
-                      <span className="text-[10px] text-[#43474e]">Allow in executive presentation outfits</span>
+                      <span className="text-xs font-semibold text-[#171c23] dark:text-white block">Formal Meeting Eligible</span>
+                      <span className="text-[10px] text-[#43474e] dark:text-slate-400">Allow in executive presentation outfits</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={eligibleFormal}
                       onChange={(e) => setEligibleFormal(e.target.checked)}
-                      className="w-5 h-5 rounded text-[#1e3a5f] focus:ring-[#1e3a5f]"
+                      className="w-5 h-5 rounded text-[#1e3a5f] dark:text-[#5ce3e6] focus:ring-[#1e3a5f]"
                     />
                   </div>
 
@@ -261,7 +261,7 @@ export default function AddGarmentPage() {
                       type="button"
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="w-full py-3 px-4 rounded-full bg-[#1e3a5f] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-level-1 hover:bg-[#022448] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full py-3 px-4 rounded-full bg-[#1e3a5f] dark:bg-[#5ce3e6] text-white dark:text-[#070f1c] font-semibold text-xs flex items-center justify-center gap-2 shadow-level-1 hover:bg-[#022448] dark:hover:bg-[#38c9cd] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {isSaving ? <Sparkles className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       <span>{isSaving ? 'Saving...' : 'Save to Wardrobe'}</span>
@@ -270,7 +270,7 @@ export default function AddGarmentPage() {
                     <button
                       type="button"
                       onClick={handleRetake}
-                      className="w-full py-3 px-4 rounded-full border border-[#e2e6ea] text-[#43474e] font-semibold text-xs flex items-center justify-center gap-2 hover:bg-[#f0f2f5] transition-all"
+                      className="w-full py-3 px-4 rounded-full border border-[#e2e6ea] dark:border-[#5ce3e6]/30 text-[#43474e] dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-[#f0f2f5] dark:hover:bg-[#15253b] transition-all"
                     >
                       <RotateCcw className="w-4 h-4" />
                       <span>Retake Photo</span>
@@ -284,6 +284,6 @@ export default function AddGarmentPage() {
       </main>
 
       <BottomNav />
-    </SartorialBackground>
+    </>
   );
 }

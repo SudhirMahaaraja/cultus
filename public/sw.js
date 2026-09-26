@@ -1,8 +1,6 @@
-const CACHE_NAME = 'cultus-v1';
+const CACHE_NAME = 'cultus-v2';
 const STATIC_ASSETS = [
   '/',
-  '/wardrobe',
-  '/add',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -10,7 +8,15 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.allSettled(
+        STATIC_ASSETS.map((url) =>
+          fetch(url).then((res) => {
+            if (res.ok) return cache.put(url, res);
+          }).catch(() => {})
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -25,24 +31,26 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Network-first for API calls; cache-first for static assets
   const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) return;
+
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
   } else {
     event.respondWith(
-      caches.match(event.request).then((cached) =>
-        cached || fetch(event.request).then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
-          return res;
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
         })
-      )
+        .catch(() => caches.match(event.request))
     );
   }
 });

@@ -278,7 +278,7 @@ function OrbitalGalleryView({
         )}
       </div>
 
-      <BottomNav variant="dark" />
+      <BottomNav />
     </div>
   );
 }
@@ -359,27 +359,29 @@ export default function WardrobePage() {
 
   // --- GRID VIEW ---
   return (
-    <SartorialBackground>
+    <>
       <Header />
 
       <main className="flex-1 w-full px-4 pt-4 flex flex-col items-center">
         {/* Wardrobe Header */}
         <div className="w-full flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-semibold text-[#171c23]">
+            <h2 className="text-base font-semibold text-[#171c23] dark:text-white">
               Digital Wardrobe Inventory
             </h2>
-            <p className="text-xs text-[#43474e]">
+            <p className="text-xs text-[#43474e] dark:text-slate-300">
               {items.length} executive garments in active rotation
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-[#e4e8f2] p-1 rounded-xl text-xs font-semibold">
+          <div className="flex items-center gap-1.5 bg-[#e4e8f2] dark:bg-[#15253b] p-1 rounded-xl text-xs font-semibold border border-transparent dark:border-[#5ce3e6]/20">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'grid' ? 'bg-white text-[#1e3a5f] shadow-sm' : 'text-[#43474e]'
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-[#0f9cc2] text-[#1e3a5f] dark:text-white shadow-sm'
+                  : 'text-[#43474e] dark:text-slate-400'
               }`}
               title="Grid View"
             >
@@ -388,10 +390,10 @@ export default function WardrobePage() {
             <button
               type="button"
               onClick={() => setViewMode('orbital')}
-              className="p-1.5 rounded-lg transition-all text-[#43474e]"
+              className="p-1.5 rounded-lg transition-all text-[#43474e] dark:text-slate-400"
               title="Orbital Wheel Gallery"
             >
-              <Sparkles className="w-4 h-4 text-[#9e5a44]" />
+              <Sparkles className="w-4 h-4 text-[#9e5a44] dark:text-[#5ce3e6]" />
             </button>
           </div>
         </div>
@@ -492,6 +494,6 @@ export default function WardrobePage() {
       )}
 
       <BottomNav />
-    </SartorialBackground>
+    </>
   );
 }

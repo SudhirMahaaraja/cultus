@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Briefcase, UserCheck } from 'lucide-react';
 
 interface MeetingPromptProps {
@@ -14,14 +14,22 @@ export const MeetingPrompt: React.FC<MeetingPromptProps> = ({
   meetingType,
   onChange,
 }) => {
+  const [formattedDate, setFormattedDate] = useState<string>('');
+
+  useEffect(() => {
+    setFormattedDate(
+      new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
+    );
+  }, []);
+
   return (
     <div className="w-full bg-white/85 dark:bg-[#0d1726]/85 border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-2xl p-4 shadow-level-1 backdrop-blur-md mb-4">
       <div className="flex items-center justify-between mb-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-[#43474e] dark:text-[#5ce3e6]">
           Morning Context
         </h2>
-        <span className="text-[11px] font-medium text-[#9e5a44] dark:text-[#fdaa8f]">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()}
+        <span className="text-[11px] font-medium text-[#9e5a44] dark:text-[#fdaa8f]" suppressHydrationWarning>
+          {formattedDate || 'TODAY'}
         </span>
       </div>
 

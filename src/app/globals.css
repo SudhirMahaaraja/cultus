@@ -40,22 +40,22 @@
   --cool-chalk: #e2e6ea;
   --soft-mineral: #f0f2f5;
   --warm-alabaster: #f8f9fa;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #EAFBF7;
+  --foreground: #171c23;
+  --card: #ffffff;
+  --card-foreground: #171c23;
+  --popover: #ffffff;
+  --popover-foreground: #171c23;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #1e3a5f;
+  --muted: #f0f4fd;
+  --muted-foreground: #43474e;
+  --accent: #f0f4fd;
+  --accent-foreground: #1e3a5f;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #e2e6ea;
+  --input: #e2e6ea;
+  --ring: #1e3a5f;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -79,6 +79,68 @@
   z-index: -1;
   pointer-events: none;
   transition: background 0.4s ease;
+  background-size: 200% 200%;
+  animation: appGradientAnimation 20s ease infinite alternate;
+}
+
+@keyframes appGradientAnimation {
+  0% {
+    background-position: 0% 20%;
+  }
+  50% {
+    background-position: 100% 80%;
+  }
+  100% {
+    background-position: 0% 20%;
+  }
+}
+
+@keyframes floatOrb1 {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(60px, 80px) scale(1.15) rotate(180deg);
+  }
+  100% {
+    transform: translate(-40px, 30px) scale(0.9) rotate(360deg);
+  }
+}
+
+@keyframes floatOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-80px, 50px) scale(1.2) rotate(-120deg);
+  }
+  100% {
+    transform: translate(30px, -60px) scale(0.95) rotate(-240deg);
+  }
+}
+
+@keyframes floatOrb3 {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(50px, -70px) scale(1.1) rotate(140deg);
+  }
+  100% {
+    transform: translate(-60px, -40px) scale(0.85) rotate(280deg);
+  }
+}
+
+@keyframes floatOrb4 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-50px, -50px) scale(1.25);
+  }
+  100% {
+    transform: translate(40px, 60px) scale(0.9);
+  }
 }
 
 /* Light: spring celadon → river indigo */
@@ -99,11 +161,18 @@ html[data-theme="dark"] #app-gradient {
     #070f1c;
 }
 
-body {
-  background-color: transparent;
+html, body {
+  background-color: #EAFBF7;
   font-family: var(--font-jakarta);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html.dark,
+html.dark body {
+  background-color: #070f1c !important;
 }
 
 /* ── Dark mode toggle button ───────────────────────────── */

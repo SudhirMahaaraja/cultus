@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, CheckCircle2, Share, PlusSquare, X, Smartphone } from 'lucide-react';
+import { Download, CheckCircle2, Share, PlusSquare, X, Smartphone, Monitor, Info } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,10 +10,9 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const InstallPWAButton: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
@@ -38,12 +37,10 @@ export const InstallPWAButton: React.FC = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsInstallable(true);
     };
 
     const handleAppInstalled = () => {
       setInstalled(true);
-      setIsInstallable(false);
       setDeferredPrompt(null);
     };
 
@@ -58,20 +55,19 @@ export const InstallPWAButton: React.FC = () => {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setInstalled(true);
-        setIsInstallable(false);
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          setInstalled(true);
+        }
+        setDeferredPrompt(null);
+      } catch (err) {
+        console.error('PWA install prompt error:', err);
+        setShowModal(true);
       }
-      setDeferredPrompt(null);
-    } else if (isIOS) {
-      setShowIOSModal(true);
     } else {
-      // Fallback instructions for browsers that require menu option or already have prompt cached
-      alert(
-        'To download/install Cultus as an App:\n\n1. Look for the Install icon in your browser address bar (top right).\n2. Or click the Browser Menu (⋮ or ⋯) and select "Install Cultus" or "Add to Home Screen".'
-      );
+      setShowModal(true);
     }
   };
 
@@ -95,12 +91,12 @@ export const InstallPWAButton: React.FC = () => {
         <span>Download App</span>
       </button>
 
-      {/* iOS Instructions Modal */}
-      {showIOSModal && (
+      {/* Interactive Installation Guide Modal */}
+      {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-sm bg-white dark:bg-[#0d1829] border border-[#e2e6ea] dark:border-[#5ce3e6]/20 rounded-3xl p-6 shadow-2xl">
             <button
-              onClick={() => setShowIOSModal(false)}
+              onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -108,45 +104,69 @@ export const InstallPWAButton: React.FC = () => {
 
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-2xl bg-[#1e3a5f]/10 dark:bg-[#5ce3e6]/10 text-[#1e3a5f] dark:text-[#5ce3e6] flex items-center justify-center">
-                <Smartphone className="w-5 h-5" />
+                {isIOS ? <Smartphone className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
               </div>
               <div>
                 <h3 className="font-semibold text-base text-slate-900 dark:text-white">
-                  Install Cultus on iOS
+                  Download Cultus App
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Add to home screen for native app experience
+                  Install as a standalone web app
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300">
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
-                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 mt-0.5">
-                  <Share className="w-4 h-4" />
+            {isIOS ? (
+              <div className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300">
+                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 mt-0.5">
+                    <Share className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-900 dark:text-white">Step 1</strong>
+                    Tap the <span className="font-semibold text-blue-500">Share</span> button at the bottom of Safari.
+                  </div>
                 </div>
-                <div>
-                  <strong className="block text-slate-900 dark:text-white">Step 1</strong>
-                  Tap the <span className="font-semibold text-blue-500">Share</span> button at the bottom of Safari.
-                </div>
-              </div>
 
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 mt-0.5">
-                  <PlusSquare className="w-4 h-4" />
-                </div>
-                <div>
-                  <strong className="block text-slate-900 dark:text-white">Step 2</strong>
-                  Scroll down and select <span className="font-semibold text-emerald-500">Add to Home Screen</span>.
+                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 mt-0.5">
+                    <PlusSquare className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-900 dark:text-white">Step 2</strong>
+                    Scroll down and select <span className="font-semibold text-emerald-500">Add to Home Screen</span>.
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300">
+                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 mt-0.5">
+                    <Download className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-900 dark:text-white">Browser Address Bar</strong>
+                    Look for the <span className="font-semibold text-blue-500">Install Cultus</span> icon on the right side of your browser address bar.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 mt-0.5">
+                    <Info className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <strong className="block text-slate-900 dark:text-white">Browser Menu Option</strong>
+                    Click the browser menu (<span className="font-semibold">⋮</span> or <span className="font-semibold">⋯</span>) and select <span className="font-semibold text-emerald-500">Install Cultus...</span> or <span className="font-semibold text-emerald-500">Save and share &gt; Install page as app</span>.
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
-              onClick={() => setShowIOSModal(false)}
+              onClick={() => setShowModal(false)}
               className="mt-5 w-full py-2.5 rounded-xl bg-[#1e3a5f] text-white font-medium text-xs dark:bg-[#5ce3e6] dark:text-[#070f1c]"
             >
-              Got it
+              Close
             </button>
           </div>
         </div>
