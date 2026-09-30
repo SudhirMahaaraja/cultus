@@ -1,0 +1,12 @@
+Agents → Loops → Graphs → Self-Improving Systems
+
+
+
+Phase 2:
+Suggest acessoreies too (and get the inputs)
+Get the outfit data after the person wores and collect data to train a model to suggest the optimized outfit suggetions
+Set outfits/meetings or regular office for a week option so that it automaticly suggests the 
+Climate should become an optional recommendation factor
+
+Phase 3:
+Make it as SaaS
