@@ -1,6 +1,0 @@
-{
-  "watch": ["src"],
-  "ext": "ts,tsx,js,jsx,json,css",
-  "ignore": ["src/**/*.spec.ts", ".next/*", "node_modules/*"],
-  "exec": "next dev"
-}
