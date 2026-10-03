@@ -21,30 +21,54 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { colors, isDark } = useTheme();
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const handleSignIn = async () => {
+  const handleSubmit = async () => {
     if (!email.trim() || !password) {
       setErrorMsg('Please enter your email and password');
       return;
     }
 
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+        });
 
-      if (error) {
-        setErrorMsg(error.message);
-      } else if (data.session) {
-        onLoginSuccess();
+        if (error) {
+          setErrorMsg(error.message);
+        } else if (data.session) {
+          onLoginSuccess();
+        } else if (data.user) {
+          setSuccessMsg('Account created successfully! If email confirmation is required, please check your inbox, or sign in now.');
+          setIsSignUp(false);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+        if (error) {
+          setErrorMsg(error.message);
+        } else if (data.session) {
+          onLoginSuccess();
+        }
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'An unexpected error occurred');
@@ -80,12 +104,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             },
           ]}
         >
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>Sign In</Text>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+            {isSignUp ? 'Create Account' : 'Sign In'}
+          </Text>
 
           {errorMsg && (
             <View style={[styles.errorBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
               <Ionicons name="alert-circle" size={16} color={colors.danger} />
               <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
+            </View>
+          )}
+
+          {successMsg && (
+            <View style={[styles.errorBox, { backgroundColor: 'rgba(34, 197, 94, 0.12)' }]}>
+              <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
+              <Text style={[styles.errorText, { color: '#22c55e' }]}>{successMsg}</Text>
             </View>
           )}
 
@@ -132,20 +165,39 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={handleSignIn}
+            onPress={handleSubmit}
             disabled={loading}
             style={[styles.submitButton, { backgroundColor: colors.accent }]}
           >
             {loading ? (
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
-              <Text style={styles.submitButtonText}>Continue to Wardrobe</Text>
+              <Text style={styles.submitButtonText}>
+                {isSignUp ? 'Create Account' : 'Continue to Wardrobe'}
+              </Text>
             )}
+          </TouchableOpacity>
+
+          {/* Mode Switcher */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setIsSignUp(!isSignUp);
+              setErrorMsg(null);
+              setSuccessMsg(null);
+            }}
+            style={styles.switchModeButton}
+          >
+            <Text style={[styles.switchModeText, { color: colors.accent }]}>
+              {isSignUp
+                ? 'Already have an account? Sign In'
+                : "Don't have an account? Create One"}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <Text style={[styles.footerNote, { color: colors.foregroundMuted }]}>
-          Single-user secure session. Session persists automatically.
+          Secure authentication powered by Supabase Auth.
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -260,9 +312,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
+  switchModeButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  switchModeText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   footerNote: {
     marginTop: 24,
     textAlign: 'center',
     fontSize: 12,
   },
 });
+

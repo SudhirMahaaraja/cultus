@@ -1,7 +1,7 @@
--- Outfit Planner Initial Migration & Schema Update
--- Safe execution on existing/fresh database
+-- Cultus Outfit Planner Database Migration
+-- Safe to execute against fresh or existing project with 0 rows
 
--- 1. Helper function for updated_at timestamps
+-- 1. Timestamp update trigger function
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -10,8 +10,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 2. clothing_items table
-CREATE TABLE IF NOT EXISTS public.clothing_items (
+-- 2. Drop existing tables if present (clean recreation since tables are empty)
+DROP TABLE IF EXISTS public.outfit_feedback CASCADE;
+DROP TABLE IF EXISTS public.office_days CASCADE;
+DROP TABLE IF EXISTS public.outfits CASCADE;
+DROP TABLE IF EXISTS public.clothing_items CASCADE;
+
+-- 3. clothing_items table
+CREATE TABLE public.clothing_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -43,58 +49,8 @@ CREATE TABLE IF NOT EXISTS public.clothing_items (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- In case clothing_items already exists, safely modify / drop old check constraints and add new columns
-DO $$
-BEGIN
-    -- Update category check constraint if table already existed
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'clothing_items'
-    ) THEN
-        -- Alter existing columns / constraints if needed
-        ALTER TABLE public.clothing_items ALTER COLUMN user_id SET DEFAULT auth.uid();
-        ALTER TABLE public.clothing_items ALTER COLUMN user_id SET NOT NULL;
-        ALTER TABLE public.clothing_items ALTER COLUMN image_url DROP NOT NULL;
-        ALTER TABLE public.clothing_items ALTER COLUMN analysis_model SET DEFAULT 'gpt-4o-mini';
-        ALTER TABLE public.clothing_items ALTER COLUMN analysis_version SET DEFAULT 'v2';
-        
-        -- Drop old category check if present
-        ALTER TABLE public.clothing_items DROP CONSTRAINT IF EXISTS clothing_items_category_check;
-        ALTER TABLE public.clothing_items ADD CONSTRAINT clothing_items_category_check CHECK (category IN ('top', 'bottom', 'shoes'));
-        
-        -- Add garment_type if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='garment_type') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN garment_type TEXT NOT NULL DEFAULT 'other';
-        END IF;
-
-        -- Add user_overrides if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='user_overrides') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN user_overrides JSONB DEFAULT '{}'::jsonb;
-        END IF;
-
-        -- Add active if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='active') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN active BOOLEAN DEFAULT TRUE;
-        END IF;
-
-        -- Add is_damaged if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='is_damaged') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN is_damaged BOOLEAN DEFAULT FALSE;
-        END IF;
-
-        -- Add wear_count if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='wear_count') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN wear_count INTEGER DEFAULT 0;
-        END IF;
-
-        -- Add last_worn_at if missing
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name='clothing_items' AND column_name='last_worn_at') THEN
-            ALTER TABLE public.clothing_items ADD COLUMN last_worn_at TIMESTAMPTZ;
-        END IF;
-    END IF;
-END $$;
-
--- 3. outfits table
-CREATE TABLE IF NOT EXISTS public.outfits (
+-- 4. outfits table
+CREATE TABLE public.outfits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     shirt_id UUID NOT NULL REFERENCES public.clothing_items(id) ON DELETE CASCADE,
@@ -110,8 +66,8 @@ CREATE TABLE IF NOT EXISTS public.outfits (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. office_days table
-CREATE TABLE IF NOT EXISTS public.office_days (
+-- 5. office_days table
+CREATE TABLE public.office_days (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
@@ -122,21 +78,12 @@ CREATE TABLE IF NOT EXISTS public.office_days (
     selected_outfit_id UUID REFERENCES public.outfits(id) ON DELETE SET NULL,
     confirmed_outfit_id UUID REFERENCES public.outfits(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT office_days_user_id_date_key UNIQUE (user_id, date)
 );
 
--- Drop old date unique constraint if existing, ensure composite unique(user_id, date)
-DO $$
-BEGIN
-    ALTER TABLE public.office_days DROP CONSTRAINT IF EXISTS office_days_date_key;
-    ALTER TABLE public.office_days DROP CONSTRAINT IF EXISTS office_days_user_id_date_key;
-    ALTER TABLE public.office_days ADD CONSTRAINT office_days_user_id_date_key UNIQUE (user_id, date);
-EXCEPTION WHEN others THEN
-    NULL;
-END $$;
-
--- 5. outfit_feedback table
-CREATE TABLE IF NOT EXISTS public.outfit_feedback (
+-- 6. outfit_feedback table
+CREATE TABLE public.outfit_feedback (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
     shirt_id UUID NOT NULL REFERENCES public.clothing_items(id) ON DELETE CASCADE,
@@ -147,41 +94,32 @@ CREATE TABLE IF NOT EXISTS public.outfit_feedback (
     CONSTRAINT outfit_feedback_unique_triple UNIQUE (user_id, shirt_id, bottom_id, footwear_id, feedback_type)
 );
 
--- 6. Updated_at Triggers
-DROP TRIGGER IF EXISTS trg_clothing_items_updated_at ON public.clothing_items;
+-- 7. Updated_at Triggers
 CREATE TRIGGER trg_clothing_items_updated_at
 BEFORE UPDATE ON public.clothing_items
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-DROP TRIGGER IF EXISTS trg_outfits_updated_at ON public.outfits;
 CREATE TRIGGER trg_outfits_updated_at
 BEFORE UPDATE ON public.outfits
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-DROP TRIGGER IF EXISTS trg_office_days_updated_at ON public.office_days;
 CREATE TRIGGER trg_office_days_updated_at
 BEFORE UPDATE ON public.office_days
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- 7. Indexes
-CREATE INDEX IF NOT EXISTS idx_clothing_items_user_active ON public.clothing_items(user_id, active);
-CREATE INDEX IF NOT EXISTS idx_clothing_items_user_category ON public.clothing_items(user_id, category);
-CREATE INDEX IF NOT EXISTS idx_outfits_user_worn_on ON public.outfits(user_id, worn_on);
-CREATE INDEX IF NOT EXISTS idx_outfits_user_status ON public.outfits(user_id, status);
-CREATE INDEX IF NOT EXISTS idx_office_days_user_date ON public.office_days(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_outfit_feedback_user_type ON public.outfit_feedback(user_id, feedback_type);
+-- 8. Indexes
+CREATE INDEX idx_clothing_items_user_active ON public.clothing_items(user_id, active);
+CREATE INDEX idx_clothing_items_user_category ON public.clothing_items(user_id, category);
+CREATE INDEX idx_outfits_user_worn_on ON public.outfits(user_id, worn_on);
+CREATE INDEX idx_outfits_user_status ON public.outfits(user_id, status);
+CREATE INDEX idx_office_days_user_date ON public.office_days(user_id, date);
+CREATE INDEX idx_outfit_feedback_user_type ON public.outfit_feedback(user_id, feedback_type);
 
--- 8. Row Level Security (RLS)
+-- 9. Row Level Security (RLS)
 ALTER TABLE public.clothing_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.outfits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.office_days ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.outfit_feedback ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if any
-DROP POLICY IF EXISTS "clothing_items_owner_policy" ON public.clothing_items;
-DROP POLICY IF EXISTS "outfits_owner_policy" ON public.outfits;
-DROP POLICY IF EXISTS "office_days_owner_policy" ON public.office_days;
-DROP POLICY IF EXISTS "outfit_feedback_owner_policy" ON public.outfit_feedback;
 
 CREATE POLICY "clothing_items_owner_policy" ON public.clothing_items
     FOR ALL
@@ -203,15 +141,10 @@ CREATE POLICY "outfit_feedback_owner_policy" ON public.outfit_feedback
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
--- 9. confirm_outfit database function
--- Single transaction Wear this handler:
--- 1) Reverts any previously confirmed outfit for this user on this date
--- 2) Marks the target outfit confirmed and sets worn_on
--- 3) Upserts office_days
--- 4) Recounts wear_count and updates last_worn_at for shirt, bottom, and shoes from all confirmed outfits
+-- 10. confirm_outfit database function (SECURITY INVOKER)
 CREATE OR REPLACE FUNCTION public.confirm_outfit(p_outfit_id UUID, p_date DATE)
 RETURNS jsonb
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public, auth
 LANGUAGE plpgsql
 AS $$
@@ -270,11 +203,24 @@ BEGIN
     SET status = 'confirmed', worn_on = p_date
     WHERE id = p_outfit_id AND user_id = v_user_id;
 
-    -- 3) Upsert office_days record
-    INSERT INTO public.office_days (user_id, date, is_office_day, confirmed_outfit_id)
-    VALUES (v_user_id, p_date, true, p_outfit_id)
+    -- 3) Upsert office_days record (both selected_outfit_id and confirmed_outfit_id)
+    INSERT INTO public.office_days (
+        user_id,
+        date,
+        is_office_day,
+        selected_outfit_id,
+        confirmed_outfit_id
+    )
+    VALUES (
+        v_user_id,
+        p_date,
+        true,
+        p_outfit_id,
+        p_outfit_id
+    )
     ON CONFLICT (user_id, date)
     DO UPDATE SET 
+        selected_outfit_id = p_outfit_id,
         confirmed_outfit_id = p_outfit_id,
         is_office_day = true,
         updated_at = NOW();
@@ -302,11 +248,13 @@ BEGIN
 END;
 $$;
 
--- 10. Storage bucket and security policies
--- Make bucket private and restrict to user folders
+-- 11. Storage bucket configuration and security policies
+-- Make bucket private even if previously public
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('garment-images', 'garment-images', false)
 ON CONFLICT (id) DO UPDATE SET public = false;
+
+UPDATE storage.buckets SET public = false WHERE id = 'garment-images';
 
 DROP POLICY IF EXISTS "Users can read own garment images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload own garment images" ON storage.objects;

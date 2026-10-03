@@ -37,7 +37,7 @@ export interface Garment {
 }
 
 export interface OutfitRecommendation {
-  outfit_id?: string;
+  outfit_id: string;
   shirt_id: string;
   bottom_id: string;
   footwear_id: string;

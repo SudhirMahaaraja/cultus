@@ -13,6 +13,10 @@ declare module 'https://deno.land/std@0.177.0/http/server.ts' {
   ): void;
 }
 
+declare module 'https://deno.land/std@0.177.0/encoding/base64.ts' {
+  export function encode(data: ArrayBuffer | Uint8Array): string;
+}
+
 declare module 'https://esm.sh/@supabase/supabase-js@2.45.4' {
   export function createClient(
     supabaseUrl: string,
@@ -26,4 +30,5 @@ declare module 'https://*' {
   export default content;
   export const serve: any;
   export const createClient: any;
+  export const encode: any;
 }

@@ -1,12 +1,13 @@
 /// <reference path="../deno.d.ts" />
 // Edge Function: analyze-garment
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { encode as base64Encode } from 'https://deno.land/std@0.177.0/encoding/base64.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { callAzureOpenAI } from '../_shared/azure.ts';
 import {
   GARMENT_ANALYSIS_SYSTEM_PROMPT,
   GARMENT_ANALYSIS_SCHEMA,
-  PROMPTS_VERSION,
+  ANALYSIS_PROMPT_VERSION,
 } from '../_shared/prompts.ts';
 import {
   CATEGORIES,
@@ -49,21 +50,24 @@ serve(async (req: Request) => {
       });
     }
 
-    const body = await req.json();
+    const body: any = await req.json();
     const { image_path, image_url, base64_image } = body;
 
     let targetImageUrl = image_url;
 
-    // If storage image_path is provided, create a temporary signed download URL
+    // Download image bytes from private storage and encode to chunk-safe base64 data URL
     if (!targetImageUrl && image_path) {
-      const { data: signedData, error: signErr } = await supabase.storage
+      const { data: blob, error: dlErr } = await supabase.storage
         .from('garment-images')
-        .createSignedUrl(image_path, 300);
+        .download(image_path);
 
-      if (signErr || !signedData?.signedUrl) {
-        throw new Error(`Failed to create signed URL for image_path: ${signErr?.message}`);
+      if (dlErr || !blob) {
+        throw new Error(`Failed to download image from storage: ${dlErr?.message || 'Empty file'}`);
       }
-      targetImageUrl = signedData.signedUrl;
+
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64String = base64Encode(new Uint8Array(arrayBuffer));
+      targetImageUrl = `data:image/jpeg;base64,${base64String}`;
     } else if (base64_image) {
       targetImageUrl = base64_image.startsWith('data:')
         ? base64_image
@@ -150,7 +154,7 @@ serve(async (req: Request) => {
       visual_summary: rawResult.visual_summary || `${capitalizedName} in ${style.replace('_', ' ')} style.`,
       confidence,
       analysis_model: Deno.env.get('OPENAI_LLM') || 'gpt-4o-mini',
-      analysis_version: PROMPTS_VERSION,
+      analysis_version: ANALYSIS_PROMPT_VERSION,
       raw_analysis: rawResult,
     };
 

@@ -125,7 +125,7 @@ export const TodayScreen: React.FC = () => {
   const handleWearThis = async () => {
     if (!currentOutfit) return;
     try {
-      await confirmOutfit(currentOutfit.outfit_id || '', todayDate);
+      await confirmOutfit(currentOutfit.outfit_id, todayDate);
       const updated = await fetchConfirmedOutfitForDate(todayDate);
       setConfirmedOutfit(updated);
       Alert.alert('Logged', 'Outfit confirmed and wear history updated!');

@@ -15,7 +15,9 @@ import {
   CONDITIONS,
 } from './vocabulary.ts';
 
-export const PROMPTS_VERSION = 'v2';
+export const ANALYSIS_PROMPT_VERSION = 'v2';
+export const RANKING_PROMPT_VERSION = 'v2';
+export const PROMPTS_VERSION = ANALYSIS_PROMPT_VERSION;
 
 export const GARMENT_ANALYSIS_SYSTEM_PROMPT = `You are Cultus Modern Sartorial Vision, an expert visual wardrobe analyzer for a modern office wardrobe assistant.
 
@@ -168,7 +170,6 @@ CONFIDENCE:
 If an item has confidence below 0.5, or a relevant attribute is "unclear", do not assume. Mention the uncertainty in issues and score cautiously.
 
 SCORING (0.0 to 1.0):
-- visualScore: overall visual quality of the combination.
 - officeAppropriateness: suitability for the given context.
 - presentationAppeal: polished, confident, approachable presentation.
 - colorHarmony: harmony of hue, value, saturation and contrast.
@@ -198,7 +199,6 @@ export const OUTFIT_RANKING_SCHEMA = {
         type: 'object',
         properties: {
           candidateId: { type: 'string' },
-          visualScore: { type: 'number', minimum: 0, maximum: 1 },
           officeAppropriateness: { type: 'number', minimum: 0, maximum: 1 },
           presentationAppeal: { type: 'number', minimum: 0, maximum: 1 },
           colorHarmony: { type: 'number', minimum: 0, maximum: 1 },
@@ -223,7 +223,6 @@ export const OUTFIT_RANKING_SCHEMA = {
         },
         required: [
           'candidateId',
-          'visualScore',
           'officeAppropriateness',
           'presentationAppeal',
           'colorHarmony',

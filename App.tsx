@@ -1,9 +1,9 @@
 // Root Application Component for Cultus Outfit Planner
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, StatusBar, Modal } from 'react-native';
+import { StyleSheet, View, Text, StatusBar, Modal, BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { supabase } from './src/lib/supabase';
+import { supabase, supabaseConfigError } from './src/lib/supabase';
 import { ThemeProvider, useTheme } from './src/theme';
 import { ThemedBackground } from './src/components/ThemedBackground';
 import { Dock, TabKey } from './src/components/Dock';
@@ -15,7 +15,7 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 
 const MainNavigator: React.FC = () => {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const [session, setSession] = useState<any | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -24,7 +24,30 @@ const MainNavigator: React.FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [wardrobeRefreshKey, setWardrobeRefreshKey] = useState(0);
 
+  // Android hardware back button handler (Step 9)
   useEffect(() => {
+    const onBackPress = () => {
+      if (addModalVisible) {
+        setAddModalVisible(false);
+        return true; // handled
+      }
+      if (activeTab !== 'today') {
+        setActiveTab('today');
+        return true; // handled
+      }
+      return false; // let system exit
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [addModalVisible, activeTab]);
+
+  useEffect(() => {
+    if (supabaseConfigError) {
+      setCheckingAuth(false);
+      return;
+    }
+
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -41,6 +64,24 @@ const MainNavigator: React.FC = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Configuration guard error screen (Step 4)
+  if (supabaseConfigError) {
+    return (
+      <ThemedBackground>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <View style={styles.errorContainer}>
+          <View style={[styles.errorCard, { backgroundColor: colors.card, borderColor: colors.danger }]}>
+            <Text style={[styles.errorTitle, { color: colors.danger }]}>Configuration Required</Text>
+            <Text style={[styles.errorMessage, { color: colors.foreground }]}>{supabaseConfigError}</Text>
+            <Text style={[styles.errorHint, { color: colors.foregroundMuted }]}>
+              Ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are correctly configured in your environment or EAS secrets.
+            </Text>
+          </View>
+        </View>
+      </ThemedBackground>
+    );
+  }
 
   if (checkingAuth) {
     return (
@@ -109,5 +150,32 @@ const styles = StyleSheet.create({
   },
   screenWrapper: {
     flex: 1,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    width: '100%',
+    maxWidth: 420,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  errorMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  errorHint: {
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

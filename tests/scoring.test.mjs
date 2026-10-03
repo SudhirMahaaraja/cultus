@@ -63,7 +63,6 @@ const sampleSubscores = {
   climatePracticality: 0.9,
   officeAppropriateness: 0.8,
 };
-// 1*0.25 + 0.5*0.2 + 0.8*0.15 + 0.7*0.1 + 0.6*0.1 + 0.9*0.1 + 0.8*0.1 = 0.25 + 0.10 + 0.12 + 0.07 + 0.06 + 0.09 + 0.08 = 0.77
 const computedVisual = computeVisualScore(sampleSubscores);
 assert.strictEqual(Math.round(computedVisual * 100) / 100, 0.77, 'Weighted visual score calculation must match exact formula');
 console.log('✔ Test 2 Passed: 7 visual sub-score weights and linear computation validated');
@@ -76,7 +75,6 @@ const freshRecentWorn = computeFreshnessScore(1, 4);
 assert(freshRecentWorn < 0.1, 'Frequently worn item must have low freshness score');
 
 const compScore = computeCompositeScore(0.80, 0.90);
-// 0.7*0.8 + 0.3*0.9 = 0.56 + 0.27 = 0.83
 assert.strictEqual(Math.round(compScore * 100) / 100, 0.83, 'Composite score must be 70% visual and 30% freshness');
 console.log('✔ Test 3 Passed: Freshness score and 70/30 composite score formula validated');
 
@@ -111,12 +109,11 @@ const mockAiOutputs = [
     texturePatternHarmony: 0.3,
     climatePracticality: 0.5,
     officeAppropriateness: 0.2,
-    recommendationStatus: 'reject', // rejected candidate -> must be excluded
+    recommendationStatus: 'reject',
     rationale: 'Clashing colors',
     howToWear: [],
     issues: ['Incompatible colors'],
   },
-  // cand_2 is missing from AI output! (simulating model omitted a candidate)
 ];
 
 const processed = processAIRankings(mockCandidates, mockAiOutputs);
@@ -128,21 +125,13 @@ console.log('✔ Test 4 Passed: Missing candidates and rejected candidates exclu
 
 // Test 5: Repeat Rule: Last 5 Confirmed Office Days (Not 5 Calendar Days)
 const mockOfficeDays = [
-  // Day 1 (most recent): confirmed office day
   { date: '2026-09-30', is_office_day: true, confirmed_outfit_id: 'outfit_1', outfit: { shirt_id: 's1', bottom_id: 'b1', footwear_id: 'sh1' } },
-  // Non-office day (weekend) -> should NOT count as an office day
   { date: '2026-09-29', is_office_day: false, confirmed_outfit_id: 'outfit_weekend', outfit: { shirt_id: 's_w', bottom_id: 'b_w', footwear_id: 'sh_w' } },
-  // Day 2: confirmed office day
   { date: '2026-09-28', is_office_day: true, confirmed_outfit_id: 'outfit_2', outfit: { shirt_id: 's2', bottom_id: 'b2', footwear_id: 'sh2' } },
-  // Day 3: confirmed office day
   { date: '2026-09-27', is_office_day: true, confirmed_outfit_id: 'outfit_3', outfit: { shirt_id: 's3', bottom_id: 'b3', footwear_id: 'sh3' } },
-  // Office day with NO confirmed outfit (unconfirmed) -> should NOT count
   { date: '2026-09-26', is_office_day: true, confirmed_outfit_id: null, outfit: null },
-  // Day 4: confirmed office day
   { date: '2026-09-25', is_office_day: true, confirmed_outfit_id: 'outfit_4', outfit: { shirt_id: 's4', bottom_id: 'b4', footwear_id: 'sh4' } },
-  // Day 5: confirmed office day
   { date: '2026-09-24', is_office_day: true, confirmed_outfit_id: 'outfit_5', outfit: { shirt_id: 's5', bottom_id: 'b5', footwear_id: 'sh5' } },
-  // Day 6: confirmed office day (6th office day ago -> EXCLUDED from blocked set)
   { date: '2026-09-23', is_office_day: true, confirmed_outfit_id: 'outfit_6', outfit: { shirt_id: 's6', bottom_id: 'b6', footwear_id: 'sh6' } },
 ];
 

@@ -12,6 +12,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   runOnJS,
+  useReducedMotion,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {
   PanGestureHandler,
@@ -161,7 +163,7 @@ export const CardStack: React.FC<CardStackProps> = ({
 interface StackCardItemProps {
   garment: Garment;
   stackPos: number; // 0 (front) to 4 (back)
-  translateY: Animated.SharedValue<number>;
+  translateY: SharedValue<number>;
   onPress?: () => void;
 }
 
@@ -171,6 +173,8 @@ const StackCardItem: React.FC<StackCardItemProps> = ({
   translateY,
   onPress,
 }) => {
+  const reducedMotion = useReducedMotion();
+
   // Preset stack styles according to spec:
   // Offsets: 0, 160, 280
   // Scales: 1.0, 0.82, 0.70
@@ -182,6 +186,16 @@ const StackCardItem: React.FC<StackCardItemProps> = ({
   const targetRotateX = stackPos === 0 ? '0deg' : stackPos === 1 ? '8deg' : '15deg';
 
   const animatedStyle = useAnimatedStyle(() => {
+    if (reducedMotion) {
+      return {
+        transform: [
+          { translateY: stackPos === 0 ? translateY.value : targetOffsetY },
+          { scale: targetScale },
+        ],
+        opacity: targetOpacity,
+      };
+    }
+
     if (stackPos === 0) {
       return {
         transform: [

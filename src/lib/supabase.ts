@@ -1,4 +1,4 @@
-// Supabase React Native Client Setup with AsyncStorage and Image URL Cache
+// Supabase React Native Client Setup with AsyncStorage, Startup Config Guard, and Image URL Cache
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
@@ -7,14 +7,40 @@ import { STORAGE } from '../config';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+/**
+ * Startup Config Guard: checks for missing, empty, or unexpanded template variables
+ */
+export function getSupabaseConfigError(): string | null {
+  if (!supabaseUrl || supabaseUrl.trim() === '') {
+    return 'Missing EXPO_PUBLIC_SUPABASE_URL. Please configure the Supabase URL in your environment or EAS secrets.';
+  }
+  if (supabaseUrl.includes('$')) {
+    return 'EXPO_PUBLIC_SUPABASE_URL contains unexpanded template syntax ($). Please check your EAS environment variables.';
+  }
+  if (!supabaseAnonKey || supabaseAnonKey.trim() === '') {
+    return 'Missing EXPO_PUBLIC_SUPABASE_ANON_KEY. Please configure the Anon Key in your environment or EAS secrets.';
+  }
+  if (supabaseAnonKey.includes('$')) {
+    return 'EXPO_PUBLIC_SUPABASE_ANON_KEY contains unexpanded template syntax ($). Please check your EAS environment variables.';
+  }
+  return null;
+}
+
+export const supabaseConfigError = getSupabaseConfigError();
+
+// Create client (with fallback dummy values if config invalid so module eval succeeds)
+export const supabase = createClient(
+  supabaseConfigError ? 'https://placeholder-config-error.supabase.co' : supabaseUrl,
+  supabaseConfigError ? 'placeholder-anon-key' : supabaseAnonKey,
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
 
 // In-memory cache for signed URLs: storagePath -> { url: string, expiresAt: number }
 const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();

@@ -1,0 +1,8 @@
+# Supabase Project Configuration
+project_id = "cultus"
+
+[functions.analyze-garment]
+verify_jwt = true
+
+[functions.suggest-outfit]
+verify_jwt = true

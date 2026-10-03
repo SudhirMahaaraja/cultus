@@ -2,8 +2,11 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
-    "lib": ["DOM", "ESNext"],
+    "moduleResolution": "bundler",
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
     "allowJs": true,
     "jsx": "react-native",
     "noEmit": true,
@@ -15,7 +18,9 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
   },
   "include": [
@@ -27,5 +32,6 @@
     "node_modules",
     "supabase/functions",
     "tests"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

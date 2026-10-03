@@ -1,18 +1,23 @@
 /// <reference path="../deno.d.ts" />
 // Edge Function: suggest-outfit
-// Matches Cultus Modern Sartorial Vision ranking prompt and scoring pipeline
+// Uses modular scoring engine, strict candidate exclusion, retry on missing, and persistent outfit rows
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { callAzureOpenAI } from '../_shared/azure.ts';
 import {
   OUTFIT_RANKING_SYSTEM_PROMPT,
   OUTFIT_RANKING_SCHEMA,
+  RANKING_PROMPT_VERSION,
 } from '../_shared/prompts.ts';
 import {
-  CONFIG,
-  FORMAL_BLOCKLIST,
-  GarmentType,
-} from '../_shared/vocabulary.ts';
+  CandidateTriple,
+  CandidateItem,
+  AIRankingItem,
+  filterGarmentsByContext,
+  computeFreshnessScore,
+  getRecentOfficeDayCombos,
+  processAIRankings,
+} from '../_shared/scoring.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,8 +52,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const body = await req.json().catch(() => ({}));
-    // Map context: "formal_meeting" or "regular_day"
+    const body: any = await req.json().catch(() => ({}));
     const isFormal = body.meeting_type === 'formal' || body.context === 'formal_meeting';
     const contextStr = isFormal ? 'formal_meeting' : 'regular_day';
     const meeting_notes = body.meeting_notes || '';
@@ -74,7 +78,7 @@ serve(async (req: Request) => {
     }
 
     // Merge user_overrides and filter out damaged items
-    const garments = rawGarments
+    const garments: CandidateItem[] = rawGarments
       .filter((g: any) => !g.is_damaged)
       .map((g: any) => {
         const overrides = g.user_overrides || {};
@@ -83,7 +87,7 @@ serve(async (req: Request) => {
           ...overrides,
           id: g.id,
           category: overrides.category || g.category,
-          garment_type: (overrides.garment_type || g.garment_type) as GarmentType,
+          garment_type: overrides.garment_type || g.garment_type,
           style: overrides.style || g.style,
           office_suitability: overrides.office_suitability ?? g.office_suitability ?? 0.5,
           formal_meeting_suitability: overrides.formal_meeting_suitability ?? g.formal_meeting_suitability ?? 0.5,
@@ -117,56 +121,48 @@ serve(async (req: Request) => {
       rejectedTodaySet.add(`${r.shirt_id}_${r.bottom_id}_${r.footwear_id}`);
     });
 
-    // 4. Load past confirmed outfits (for 5-day repeat rule & 60-day pair frequency)
+    // 4. Load past confirmed office days for 5-office-day repeat rule (Step 8)
+    const { data: pastOfficeDays } = await supabase
+      .from('office_days')
+      .select(`
+        date,
+        is_office_day,
+        confirmed_outfit_id,
+        outfit:outfits!confirmed_outfit_id(shirt_id, bottom_id, footwear_id)
+      `)
+      .eq('user_id', user.id)
+      .eq('is_office_day', true)
+      .not('confirmed_outfit_id', 'is', null)
+      .order('date', { ascending: false })
+      .limit(25);
+
+    const recent5OfficeDaysSet = getRecentOfficeDayCombos(pastOfficeDays || [], 5);
+
+    // 5. Load past 60-day confirmed outfits for pair frequency
     const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const { data: pastConfirmed } = await supabase
       .from('outfits')
       .select('shirt_id, bottom_id, footwear_id, worn_on')
       .eq('user_id', user.id)
       .eq('status', 'confirmed')
-      .gte('worn_on', sixtyDaysAgo)
-      .order('worn_on', { ascending: false });
+      .gte('worn_on', sixtyDaysAgo);
 
-    // Track last 5 office days worn combinations
-    const recent5DaysSet = new Set<string>();
-    const pastConfirmedList = pastConfirmed || [];
-    const uniquePastDates = Array.from(new Set(pastConfirmedList.map((p: any) => p.worn_on))).slice(0, CONFIG.recentOfficeDaysExclusionWindow);
-    pastConfirmedList
-      .filter((p: any) => uniquePastDates.includes(p.worn_on))
-      .forEach((p: any) => {
-        recent5DaysSet.add(`${p.shirt_id}_${p.bottom_id}_${p.footwear_id}`);
-      });
-
-    // Count top+bottom pair frequency in last 60 days
     const pairCounts: Record<string, number> = {};
-    pastConfirmedList.forEach((p: any) => {
+    (pastConfirmed || []).forEach((p: any) => {
       const pairKey = `${p.shirt_id}_${p.bottom_id}`;
       pairCounts[pairKey] = (pairCounts[pairKey] || 0) + 1;
     });
 
-    // 5. Apply context rules to filter items
-    const tops = garments.filter((g: any) => g.category === 'top');
-    const bottoms = garments.filter((g: any) => g.category === 'bottom');
-    const shoes = garments.filter((g: any) => g.category === 'shoes');
+    // 6. Filter items by context using shared scoring module
+    const tops = garments.filter((g) => g.category === 'top');
+    const bottoms = garments.filter((g) => g.category === 'bottom');
+    const shoes = garments.filter((g) => g.category === 'shoes');
 
-    const filterByContext = (list: any[]) => {
-      if (isFormal) {
-        return list.filter(
-          (g) =>
-            g.formal_meeting_suitability >= CONFIG.formalMeetingSuitabilityMinFormal &&
-            g.style !== 'casual_only' &&
-            !FORMAL_BLOCKLIST.includes(g.garment_type)
-        );
-      } else {
-        return list.filter((g) => g.office_suitability >= CONFIG.officeSuitabilityMinRegular);
-      }
-    };
+    let filteredTops = filterGarmentsByContext(tops, isFormal);
+    let filteredBottoms = filterGarmentsByContext(bottoms, isFormal);
+    let filteredShoes = filterGarmentsByContext(shoes, isFormal);
 
-    let filteredTops = filterByContext(tops);
-    let filteredBottoms = filterByContext(bottoms);
-    let filteredShoes = filterByContext(shoes);
-
-    // If small wardrobe or strict filter eliminates category, gracefully relax
+    // Tiny wardrobe graceful fallback
     if (filteredTops.length === 0) filteredTops = tops;
     if (filteredBottoms.length === 0) filteredBottoms = bottoms;
     if (filteredShoes.length === 0) filteredShoes = shoes;
@@ -182,16 +178,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // 6. Build all candidate combinations
-    interface Candidate {
-      id: string;
-      top: any;
-      bottom: any;
-      shoes: any;
-      freshnessScore: number;
-    }
-
-    const allCandidates: Candidate[] = [];
+    // 7. Build candidates
+    const allCandidates: CandidateTriple[] = [];
     const now = Date.now();
 
     for (const t of filteredTops) {
@@ -199,11 +187,9 @@ serve(async (req: Request) => {
         for (const s of filteredShoes) {
           const tripleKey = `${t.id}_${b.id}_${s.id}`;
 
-          // Filter blocked triples & today's rejected
           if (blockedSet.has(tripleKey)) continue;
           if (rejectedTodaySet.has(tripleKey)) continue;
 
-          // Freshness calculation
           const topLastWorn = t.last_worn_at ? new Date(t.last_worn_at).getTime() : 0;
           const bottomLastWorn = b.last_worn_at ? new Date(b.last_worn_at).getTime() : 0;
           const shoesLastWorn = s.last_worn_at ? new Date(s.last_worn_at).getTime() : 0;
@@ -213,12 +199,8 @@ serve(async (req: Request) => {
           const daysSinceShoes = shoesLastWorn ? (now - shoesLastWorn) / (1000 * 3600 * 24) : 60;
 
           const minDaysSince = Math.min(daysSinceTop, daysSinceBottom, daysSinceShoes);
-          const freshnessDaysNormalized = Math.min(1, minDaysSince / 30); // 30+ days = 1.0
-
           const pairFreq = pairCounts[`${t.id}_${b.id}`] || 0;
-          const pairPenalty = Math.max(0, 1 - (pairFreq * 0.25)); // 0 pairs = 1.0, 4+ pairs = 0.0
-
-          const freshnessScore = (0.6 * freshnessDaysNormalized) + (0.4 * pairPenalty);
+          const freshnessScore = computeFreshnessScore(minDaysSince, pairFreq);
 
           allCandidates.push({
             id: tripleKey,
@@ -231,8 +213,8 @@ serve(async (req: Request) => {
       }
     }
 
-    // Filter 5-day repeats if we have enough candidates
-    let validCandidates = allCandidates.filter((c) => !recent5DaysSet.has(c.id));
+    // Filter 5-office-day repeats if candidates remain
+    let validCandidates = allCandidates.filter((c) => !recent5OfficeDaysSet.has(c.id));
     if (validCandidates.length === 0) {
       validCandidates = allCandidates;
     }
@@ -248,11 +230,11 @@ serve(async (req: Request) => {
       );
     }
 
-    // Sort by freshness to select top 12 to 15 candidates for AI ranking
+    // Keep top 12 to 15 candidates by freshness for AI ranking
     validCandidates.sort((a, b) => b.freshnessScore - a.freshnessScore);
-    const topCandidates = validCandidates.slice(0, CONFIG.maxCandidatesToRank);
+    const topCandidates = validCandidates.slice(0, 15);
 
-    // 7. Format Candidate Visual Analysis payload for the Ranking Prompt
+    // Format Candidate Visual Analysis payload (no file names, no image URLs, no IDs as evidence)
     const formatGarmentForAI = (item: any) => ({
       category: item.category,
       garment_type: item.garment_type,
@@ -268,7 +250,7 @@ serve(async (req: Request) => {
       formal_meeting_suitability: item.formal_meeting_suitability,
       climate_practicality: item.climate_practicality,
       confidence: item.confidence,
-      visual_summary: item.visual_summary || item.name,
+      visual_summary: item.visual_summary || `${item.category} item`,
     });
 
     const candidatesPayload = topCandidates.map((c, index) => ({
@@ -289,89 +271,61 @@ serve(async (req: Request) => {
       { role: 'user' as const, content: JSON.stringify(userPromptPayload, null, 2) },
     ];
 
-    const aiRankingResult = await callAzureOpenAI(rankingMessages, {
+    // Call Azure OpenAI with retry if any candidates are missing
+    let aiRankingResult = await callAzureOpenAI(rankingMessages, {
       name: 'outfit_rankings',
       schema: OUTFIT_RANKING_SCHEMA,
     });
 
-    const aiRanks = (aiRankingResult.rankings || []) as Array<{
-      candidateId: string;
-      visualScore: number;
-      officeAppropriateness: number;
-      presentationAppeal: number;
-      colorHarmony: number;
-      texturePatternHarmony: number;
-      proportionSilhouette: number;
-      formalityMatch: number;
-      climatePracticality: number;
-      recommendationStatus: 'recommended' | 'acceptable' | 'reject';
-      rationale: string;
-      howToWear: string[];
-      issues?: string[];
-    }>;
+    let rawRankings = (aiRankingResult.rankings || []) as AIRankingItem[];
+    let processed = processAIRankings(topCandidates, rawRankings);
 
-    const rankMap = new Map<string, typeof aiRanks[0]>();
-    aiRanks.forEach((r) => rankMap.set(r.candidateId, r));
+    // If any candidates missing, retry ranking call once
+    if (processed.missingCount > 0) {
+      console.warn(`Missing ${processed.missingCount} candidates from model, retrying ranking once...`);
+      aiRankingResult = await callAzureOpenAI(rankingMessages, {
+        name: 'outfit_rankings',
+        schema: OUTFIT_RANKING_SCHEMA,
+      });
+      rawRankings = (aiRankingResult.rankings || []) as AIRankingItem[];
+      processed = processAIRankings(topCandidates, rawRankings);
+    }
 
-    // 8. Compute final composite scores (70% Visual, 30% Freshness)
-    const rankedList = topCandidates.map((c, index) => {
-      const cid = `cand_${index}`;
-      const aiRank = rankMap.get(cid);
+    const finalRanked = processed.rankedOutfits;
 
-      const visualScore = Number(aiRank?.visualScore ?? 0.75);
-      const freshnessScore = c.freshnessScore;
-      const finalScore = (CONFIG.visualWeight * visualScore) + (CONFIG.freshnessWeight * freshnessScore);
-
-      return {
-        shirt_id: c.top.id,
-        bottom_id: c.bottom.id,
-        footwear_id: c.shoes.id,
-        top: c.top,
-        bottom: c.bottom,
-        shoes: c.shoes,
-        ai_score: Math.round(finalScore * 100),
-        visual_score: Math.round(visualScore * 100),
-        freshness_score: Math.round(freshnessScore * 100),
-        recommendation_status: aiRank?.recommendationStatus || 'recommended',
-        ai_reason: aiRank?.rationale || 'Cohesive palette and balanced proportions for the office.',
-        how_to_wear: (aiRank?.howToWear && aiRank.howToWear.length > 0)
-          ? aiRank.howToWear
-          : ['Ensure shirt is pressed and shoes are clean.'],
-        ai_tips: aiRank?.howToWear || ['Ensure shirt is pressed and shoes are clean.'],
-        issues: aiRank?.issues || [],
-      };
-    });
-
-    // Filter out candidates with recommendationStatus === 'reject' if better options exist
-    const nonRejected = rankedList.filter((r) => r.recommendation_status !== 'reject');
-    const finalRanked = nonRejected.length > 0 ? nonRejected : rankedList;
-    finalRanked.sort((a, b) => b.ai_score - a.ai_score);
-
-    // 9. Save top candidate as recommendation in outfits table
+    // 8. Ensure EVERY outfit shown has an outfits row before Wear this, Don't suggest this or Change (Step 7)
     if (finalRanked.length > 0) {
-      const topPick = finalRanked[0];
-      const { data: insertedOutfit, error: insertErr } = await supabase
-        .from('outfits')
-        .insert({
-          user_id: user.id,
-          shirt_id: topPick.shirt_id,
-          bottom_id: topPick.bottom_id,
-          footwear_id: topPick.footwear_id,
-          status: 'recommendation',
-          source: 'ai_recommendation',
-          ai_score: topPick.ai_score,
-          ai_reason: topPick.ai_reason,
-          ai_tips: topPick.how_to_wear,
-        })
-        .select()
-        .single();
+      const outfitRows = finalRanked.map((item) => ({
+        user_id: user.id,
+        shirt_id: item.shirt_id,
+        bottom_id: item.bottom_id,
+        footwear_id: item.footwear_id,
+        status: 'recommendation',
+        source: 'ai_recommendation',
+        ai_score: item.ai_score,
+        ai_reason: item.ai_reason,
+        ai_tips: item.ai_tips,
+      }));
 
-      if (!insertErr && insertedOutfit) {
-        (topPick as any).outfit_id = insertedOutfit.id;
+      const { data: insertedOutfits, error: insertBatchErr } = await supabase
+        .from('outfits')
+        .insert(outfitRows)
+        .select('id, shirt_id, bottom_id, footwear_id');
+
+      if (!insertBatchErr && insertedOutfits) {
+        insertedOutfits.forEach((row: any, i: number) => {
+          if (finalRanked[i]) {
+            (finalRanked[i] as any).outfit_id = row.id;
+          }
+        });
       }
     }
 
-    return new Response(JSON.stringify({ success: true, recommendations: finalRanked }), {
+    return new Response(JSON.stringify({
+      success: true,
+      ranking_version: RANKING_PROMPT_VERSION,
+      recommendations: finalRanked,
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -15,6 +15,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   runOnJS,
+  useReducedMotion,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {
   PanGestureHandler,
@@ -179,8 +181,8 @@ interface DockItemProps {
   index: number;
   isSelected: boolean;
   colors: any;
-  touchX: Animated.SharedValue<number>;
-  isGestureActive: Animated.SharedValue<boolean>;
+  touchX: SharedValue<number>;
+  isGestureActive: SharedValue<boolean>;
   onPress: () => void;
 }
 
@@ -193,10 +195,12 @@ const DockItem: React.FC<DockItemProps> = ({
   isGestureActive,
   onPress,
 }) => {
+  const reducedMotion = useReducedMotion();
+
   const animatedIconStyle = useAnimatedStyle(() => {
-    if (!isGestureActive.value || touchX.value < 0) {
+    if (reducedMotion || !isGestureActive.value || touchX.value < 0) {
       return {
-        transform: [{ scale: withSpring(1, SPRING_CONFIG) }],
+        transform: [{ scale: 1 }],
       };
     }
 

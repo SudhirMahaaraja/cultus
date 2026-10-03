@@ -1,57 +1,51 @@
-// Mesh Gradient & Grid Background with Light and Dark Ramps
+// Themed Background: Mesh Gradient Ramp and Ambient Glow
+// Supports bundled background images assets/bg-dark.jpg & assets/bg-light.jpg when available
 import React from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Defs, Pattern, Line, Rect } from 'react-native-svg';
 import { useTheme } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 
+// Optional bundled background images (falls back gracefully to pure gradient)
+let darkBgImage: any = null;
+let lightBgImage: any = null;
+try {
+  // @ts-ignore
+  darkBgImage = require('../../assets/bg-dark.jpg');
+} catch {
+  darkBgImage = null;
+}
+try {
+  // @ts-ignore
+  lightBgImage = require('../../assets/bg-light.jpg');
+} catch {
+  lightBgImage = null;
+}
+
 export const ThemedBackground: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { colors, isDark } = useTheme();
+  const bgImage = isDark ? darkBgImage : lightBgImage;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* 5-Color Ramp Gradient Layer */}
-      <LinearGradient
-        colors={colors.meshRamp as [string, string, ...string[]]}
-        locations={[0, 0.25, 0.5, 0.75, 1]}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* Subtle Grid Pattern Overlay */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <Svg width="100%" height="100%">
-          <Defs>
-            <Pattern
-              id="sartorial-grid"
-              width="36"
-              height="36"
-              patternUnits="userSpaceOnUse"
-            >
-              <Line
-                x1="0"
-                y1="0"
-                x2="36"
-                y2="0"
-                stroke={isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)'}
-                strokeWidth="1"
-              />
-              <Line
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="36"
-                stroke={isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)'}
-                strokeWidth="1"
-              />
-            </Pattern>
-          </Defs>
-          <Rect width="100%" height="100%" fill="url(#sartorial-grid)" />
-        </Svg>
-      </View>
+      {/* Bundled image if present */}
+      {bgImage ? (
+        <Image
+          source={bgImage}
+          style={StyleSheet.absoluteFillObject}
+          resizeMode="cover"
+        />
+      ) : (
+        /* Gradient Ramp Layer without SVG grid */
+        <LinearGradient
+          colors={colors.meshRamp as [string, string, ...string[]]}
+          locations={[0, 0.25, 0.5, 0.75, 1]}
+          start={{ x: 0.1, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+      )}
 
       {/* Ambient Radial Soft Glow */}
       <LinearGradient
