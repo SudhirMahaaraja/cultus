@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clutus - AI Wardrobe Atelier & Outfit Stylist</title>
+    <meta name="description" content="A design-engineered AI digital wardrobe and editorial outfit recommendation atelier." />
+    
+    <!-- Editorial & Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Preload Geom typeface by Thanos Poulakidas (72pt.app) -->
+    <link rel="preload" href="/fonts/Geom.ttf" as="font" type="font/ttf" crossorigin>
+  </head>
+  <body>
+    <!-- Subtle tactile noise grain texture layer inspired by Sensory UI & Backgrounds Supply -->
+    <div class="noise-overlay" aria-hidden="true"></div>
+    <div class="ambient-mesh-canvas" aria-hidden="true">
+      <div class="mesh-orb mesh-orb-1"></div>
+      <div class="mesh-orb mesh-orb-2"></div>
+      <div class="mesh-orb mesh-orb-3"></div>
+    </div>
+    
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
