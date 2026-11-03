@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Sparkles, 
-  Upload, 
-  Layers, 
-  Settings as SettingsIcon, 
-  Sun, 
-  Moon, 
-  Briefcase, 
-  Coffee, 
-  Camera, 
-  Volume2, 
-  VolumeX, 
-  Wand2, 
-  Check, 
-  Palette, 
-  Shuffle, 
+import {
+  Sparkles,
+  Upload,
+  Layers,
+  Settings as SettingsIcon,
+  Sun,
+  Moon,
+  Briefcase,
+  Coffee,
+  Camera,
+  Volume2,
+  VolumeX,
+  Wand2,
+  Check,
+  Palette,
+  Shuffle,
   Sliders,
   RefreshCw,
   Plus,
@@ -61,7 +61,7 @@ function getApiBase(): string {
   return RENDER_BACKEND;
 }
 
-const API_BASE = getApiBase();
+const API_BASE = getApiBase().replace(/\/+$/, '');
 
 
 
@@ -70,7 +70,7 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('clutus_theme') as 'light' | 'dark') || 'dark';
   });
-  
+
   const [soundOn, setSoundOn] = useState<boolean>(() => isSoundEnabled());
   const [activeTab, setActiveTab] = useState<TabType>('atelier');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -183,7 +183,7 @@ export default function App() {
     }
 
     setIsSynthesizing(true);
-    
+
     // Filter active pieces
     const activeItems = catalog.filter(item => item.active);
     const tops = activeItems.filter(item => item.category === 'top');
@@ -191,13 +191,13 @@ export default function App() {
     const shoes = activeItems.filter(item => item.category === 'shoes');
 
     // Filter by occasion affinity
-    const occasionTops = tops.filter(item => 
+    const occasionTops = tops.filter(item =>
       occasion === 'office' ? (item.office_suitability ?? 0) >= 0.5 : (item.office_suitability ?? 0) <= 0.7
     );
-    const occasionBottoms = bottoms.filter(item => 
+    const occasionBottoms = bottoms.filter(item =>
       occasion === 'office' ? (item.office_suitability ?? 0) >= 0.6 : (item.office_suitability ?? 0) <= 0.8
     );
-    const occasionShoes = shoes.filter(item => 
+    const occasionShoes = shoes.filter(item =>
       occasion === 'office' ? (item.office_suitability ?? 0) >= 0.6 : (item.office_suitability ?? 0) <= 0.85
     );
 
@@ -251,7 +251,7 @@ export default function App() {
       setUploadStep(4); // Step 4: Done
       setNewlyAddedGarment(data.garment);
       playSound.success();
-      
+
       // Refresh entire wardrobe list from Supabase
       await loadGarments();
     } catch (err: unknown) {
@@ -360,12 +360,12 @@ export default function App() {
   return (
     <div className="atelier-container">
       {/* Hidden File Input for Real Ingestion */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        accept="image/*" 
-        onChange={handleFileInputChange} 
-        style={{ display: 'none' }} 
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleFileInputChange}
+        style={{ display: 'none' }}
       />
 
       {/* Header with Floating Glass Dock & Mobile Hamburger */}
@@ -382,28 +382,28 @@ export default function App() {
 
         {/* Central Floating Pill Dock (Desktop / Tablet) */}
         <nav className="floating-dock desktop-floating-dock">
-          <button 
+          <button
             className={`dock-pill ${activeTab === 'atelier' ? 'active' : ''}`}
             onClick={() => handleTabChange('atelier')}
           >
             <Sparkles size={15} />
             The Atelier
           </button>
-          <button 
+          <button
             className={`dock-pill ${activeTab === 'wardrobe' ? 'active' : ''}`}
             onClick={() => handleTabChange('wardrobe')}
           >
             <Layers size={15} />
             Showroom {garments.length > 0 && `(${garments.length})`}
           </button>
-          <button 
+          <button
             className={`dock-pill ${activeTab === 'capture' ? 'active' : ''}`}
             onClick={() => handleTabChange('capture')}
           >
             <Camera size={15} />
             Digitize Piece
           </button>
-          <button 
+          <button
             className={`dock-pill ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => handleTabChange('settings')}
           >
@@ -414,8 +414,8 @@ export default function App() {
 
         {/* Sensory Audio, Theme Switches & Mobile Hamburger */}
         <div className="header-controls">
-          <button 
-            className="tactile-btn" 
+          <button
+            className="tactile-btn"
             onClick={toggleSound}
             title={soundOn ? 'Mute interaction sounds' : 'Enable interaction sounds'}
             aria-label="Toggle sound feedback"
@@ -431,9 +431,9 @@ export default function App() {
             )}
             {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </button>
-          <button 
-            className="tactile-btn" 
-            onClick={toggleTheme} 
+          <button
+            className="tactile-btn"
+            onClick={toggleTheme}
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
             aria-label="Toggle theme"
           >
@@ -461,8 +461,8 @@ export default function App() {
             <div className="mobile-nav-drawer" onClick={e => e.stopPropagation()}>
               <div className="mobile-nav-header">
                 <span className="editorial-eyebrow" style={{ margin: 0 }}>Navigation Menu</span>
-                <button 
-                  className="arrow-btn" 
+                <button
+                  className="arrow-btn"
                   onClick={() => setIsMobileMenuOpen(false)}
                   style={{ width: '32px', height: '32px' }}
                   aria-label="Close menu"
@@ -472,7 +472,7 @@ export default function App() {
               </div>
 
               <div className="mobile-nav-links">
-                <button 
+                <button
                   className={`mobile-nav-item ${activeTab === 'atelier' ? 'active' : ''}`}
                   onClick={() => handleTabChange('atelier')}
                 >
@@ -485,7 +485,7 @@ export default function App() {
                   </div>
                 </button>
 
-                <button 
+                <button
                   className={`mobile-nav-item ${activeTab === 'wardrobe' ? 'active' : ''}`}
                   onClick={() => handleTabChange('wardrobe')}
                 >
@@ -500,7 +500,7 @@ export default function App() {
                   </div>
                 </button>
 
-                <button 
+                <button
                   className={`mobile-nav-item ${activeTab === 'capture' ? 'active' : ''}`}
                   onClick={() => handleTabChange('capture')}
                 >
@@ -513,7 +513,7 @@ export default function App() {
                   </div>
                 </button>
 
-                <button 
+                <button
                   className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
                   onClick={() => handleTabChange('settings')}
                 >
@@ -548,7 +548,7 @@ export default function App() {
             color: '#ef4444'
           }}>
             <span>{fetchError}</span>
-            <button 
+            <button
               onClick={loadGarments}
               className="tactile-btn"
               style={{ width: 'auto', padding: '6px 14px', fontSize: '12px' }}
@@ -573,21 +573,21 @@ export default function App() {
 
             {/* Occasion Dial (Segmented Sliding Pill) */}
             <div className="occasion-bar-segmented">
-              <div 
+              <div
                 className="occasion-slider-indicator"
                 style={{
                   left: selectedOccasion === 'casual' ? '5px' : 'calc(50% + 2px)',
                   width: 'calc(50% - 7px)',
                 }}
               />
-              <button 
+              <button
                 className={`occasion-option ${selectedOccasion === 'casual' ? 'active' : ''}`}
                 onClick={() => handleOccasionChange('casual')}
               >
                 <Coffee size={16} />
                 Casual Studio
               </button>
-              <button 
+              <button
                 className={`occasion-option ${selectedOccasion === 'office' ? 'active' : ''}`}
                 onClick={() => handleOccasionChange('office')}
               >
@@ -614,7 +614,7 @@ export default function App() {
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', maxWidth: '480px', margin: '0 auto 24px auto' }}>
                   No garments found in your connected wardrobe. Digitize your first tops, bottoms, and shoes to enable automatic AI look coordination.
                 </p>
-                <button 
+                <button
                   className="btn-shimmer"
                   onClick={() => handleTabChange('capture')}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
@@ -646,11 +646,11 @@ export default function App() {
                         <span className="pedestal-tag">01 · Upper Body</span>
                         <div className="pedestal-showcase">
                           <div className="pedestal-base" />
-                          <GarmentImage 
-                            src={curatedTop.image_url} 
-                            alt={curatedTop.name} 
+                          <GarmentImage
+                            src={curatedTop.image_url}
+                            alt={curatedTop.name}
                             category={curatedTop.category}
-                            className="pedestal-img" 
+                            className="pedestal-img"
                           />
                         </div>
                         <div className="pedestal-info">
@@ -661,8 +661,8 @@ export default function App() {
                         </div>
                       </InteractiveCard>
                     ) : (
-                      <div 
-                        className="empty-pedestal-slot" 
+                      <div
+                        className="empty-pedestal-slot"
                         onClick={() => handleOpenWardrobeWithCategory('top')}
                         role="button"
                         tabIndex={0}
@@ -672,8 +672,8 @@ export default function App() {
                         </div>
                         <h4 className="empty-slot-title">01 · Upper Body</h4>
                         <p className="empty-slot-hint">No top currently active in look</p>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="empty-slot-btn"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -693,11 +693,11 @@ export default function App() {
                         <span className="pedestal-tag">02 · Lower Body</span>
                         <div className="pedestal-showcase">
                           <div className="pedestal-base" />
-                          <GarmentImage 
-                            src={curatedBottom.image_url} 
-                            alt={curatedBottom.name} 
+                          <GarmentImage
+                            src={curatedBottom.image_url}
+                            alt={curatedBottom.name}
                             category={curatedBottom.category}
-                            className="pedestal-img" 
+                            className="pedestal-img"
                           />
                         </div>
                         <div className="pedestal-info">
@@ -708,8 +708,8 @@ export default function App() {
                         </div>
                       </InteractiveCard>
                     ) : (
-                      <div 
-                        className="empty-pedestal-slot" 
+                      <div
+                        className="empty-pedestal-slot"
                         onClick={() => handleOpenWardrobeWithCategory('bottom')}
                         role="button"
                         tabIndex={0}
@@ -719,8 +719,8 @@ export default function App() {
                         </div>
                         <h4 className="empty-slot-title">02 · Lower Body</h4>
                         <p className="empty-slot-hint">No trousers or bottoms selected</p>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="empty-slot-btn"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -740,11 +740,11 @@ export default function App() {
                         <span className="pedestal-tag">03 · Footwear</span>
                         <div className="pedestal-showcase">
                           <div className="pedestal-base" />
-                          <GarmentImage 
-                            src={curatedShoes.image_url} 
-                            alt={curatedShoes.name} 
+                          <GarmentImage
+                            src={curatedShoes.image_url}
+                            alt={curatedShoes.name}
                             category={curatedShoes.category}
-                            className="pedestal-img" 
+                            className="pedestal-img"
                           />
                         </div>
                         <div className="pedestal-info">
@@ -755,8 +755,8 @@ export default function App() {
                         </div>
                       </InteractiveCard>
                     ) : (
-                      <div 
-                        className="empty-pedestal-slot" 
+                      <div
+                        className="empty-pedestal-slot"
                         onClick={() => handleOpenWardrobeWithCategory('shoes')}
                         role="button"
                         tabIndex={0}
@@ -766,8 +766,8 @@ export default function App() {
                         </div>
                         <h4 className="empty-slot-title">03 · Footwear</h4>
                         <p className="empty-slot-hint">No shoes currently active in look</p>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="empty-slot-btn"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -783,7 +783,7 @@ export default function App() {
 
                 {/* Action Bar */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                  <button 
+                  <button
                     className="btn-shimmer"
                     onClick={() => generateOutfit(selectedOccasion, garments)}
                     disabled={isSynthesizing || garments.length === 0}
@@ -839,10 +839,10 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <WardrobeRack 
-                items={garments} 
-                onToggleActive={handleToggleActive} 
-                onDeleteItem={handleDeleteItem} 
+              <WardrobeRack
+                items={garments}
+                onToggleActive={handleToggleActive}
+                onDeleteItem={handleDeleteItem}
                 onEquipItem={handleEquipItem}
                 onNavigateToCapture={() => handleTabChange('capture')}
                 initialCategory={wardrobeCategoryFilter}
@@ -864,7 +864,7 @@ export default function App() {
               Upload garment photos directly. OpenAI Vision extracts categories, textures, and formality scores straight into your Supabase database.
             </p>
 
-            <div 
+            <div
               className={`chamber-dropzone ${isDragging ? 'drag-over' : ''}`}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
@@ -913,7 +913,7 @@ export default function App() {
                   <Upload size={32} />
                 )}
               </div>
-              
+
               <h3 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '8px', position: 'relative', zIndex: 2 }}>
                 {isUploading ? 'Analyzing Garment with AI...' : 'Click or Drop Clothing Image Here'}
               </h3>
@@ -927,7 +927,7 @@ export default function App() {
               {isUploading && (
                 <div className="upload-progress-telemetry">
                   <div className="progress-bar-rail">
-                    <div 
+                    <div
                       className="progress-bar-fill"
                       style={{ width: `${Math.min(100, uploadStep * 25)}%` }}
                     />
@@ -943,9 +943,9 @@ export default function App() {
                   </div>
                 </div>
               )}
-              
+
               <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
-                <button 
+                <button
                   className="btn-shimmer"
                   type="button"
                   onClick={(e) => {
@@ -967,7 +967,7 @@ export default function App() {
 
               {/* Newly Extracted Piece Notification */}
               {newlyAddedGarment && (
-                <div 
+                <div
                   style={{
                     marginTop: '28px',
                     background: 'var(--bg-subtle)',
@@ -995,15 +995,15 @@ export default function App() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
-                    <button 
-                      className="dock-pill active" 
+                    <button
+                      className="dock-pill active"
                       style={{ fontSize: '12px', padding: '6px 14px', width: 'auto' }}
                       onClick={() => handleEquipItem(newlyAddedGarment)}
                     >
                       <Sparkles size={13} style={{ marginRight: '4px' }} /> Equip to Atelier
                     </button>
-                    <button 
-                      className="dock-pill" 
+                    <button
+                      className="dock-pill"
                       style={{ fontSize: '12px', padding: '6px 14px', width: 'auto' }}
                       onClick={() => handleOpenWardrobeWithCategory(newlyAddedGarment.category)}
                     >
@@ -1035,7 +1035,7 @@ export default function App() {
                 <h3 style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Sliders size={18} style={{ color: 'var(--gold)' }} /> Atmosphere & Sensory Audio
                 </h3>
-                
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '20px', borderBottom: '1px solid var(--border-light)' }}>
                   <div>
                     <h4 style={{ fontSize: '15px', fontWeight: 600 }}>Tactile Audio Synthesis</h4>
@@ -1044,7 +1044,7 @@ export default function App() {
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
+                    <button
                       className={`dock-pill ${soundOn ? 'active' : ''}`}
                       onClick={toggleSound}
                     >
@@ -1060,8 +1060,8 @@ export default function App() {
                       Current aesthetic theme: <span style={{ textTransform: 'capitalize', color: 'var(--gold)' }}>{theme}</span>
                     </p>
                   </div>
-                  <button 
-                    className="tactile-btn" 
+                  <button
+                    className="tactile-btn"
                     onClick={toggleTheme}
                     style={{ width: 'auto', padding: '8px 16px', gap: '8px', fontSize: '13px' }}
                   >
