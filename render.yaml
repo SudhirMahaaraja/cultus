@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: clutus-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_ENDPOINT
+        sync: false
+      - key: OPENAI_LLM
+        value: gpt-4o-mini
+      - key: OPENAI_API_VERSION
+        value: 2024-08-01-preview
+
