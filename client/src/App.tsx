@@ -37,6 +37,8 @@ import { playSound, isSoundEnabled, setSoundEnabled } from './utils/sound';
 type TabType = 'atelier' | 'capture' | 'wardrobe' | 'settings';
 type OccasionType = 'casual' | 'office';
 
+const RENDER_BACKEND = 'https://clutus-server.onrender.com';
+
 function getApiBase(): string {
   const envUrl = (import.meta as any).env?.VITE_API_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
@@ -44,16 +46,19 @@ function getApiBase(): string {
   }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    // Vercel deployment or production domain
-    if (host.endsWith('vercel.app') || (!host.includes('localhost') && !host.includes('127.0.0.1') && !host.startsWith('192.168.') && !host.startsWith('10.'))) {
-      return 'https://clutus-server.onrender.com';
+    // localhost / 127.0.0.1 => local dev
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:5000';
     }
-    // Local mobile on Wi-Fi
-    if (host !== 'localhost' && host !== '127.0.0.1') {
+    // Local Wi-Fi mobile (192.168.x.x, 10.x.x.x)
+    if (host.startsWith('192.168.') || host.startsWith('10.')) {
       return `http://${host}:5000`;
     }
+    // Everything else (vercel.app, custom domains, preview) => Render
+    return RENDER_BACKEND;
   }
-  return 'http://localhost:5000';
+  // SSR / unknown => Render
+  return RENDER_BACKEND;
 }
 
 const API_BASE = getApiBase();
