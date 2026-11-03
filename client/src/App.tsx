@@ -37,10 +37,29 @@ import { playSound, isSoundEnabled, setSoundEnabled } from './utils/sound';
 type TabType = 'atelier' | 'capture' | 'wardrobe' | 'settings';
 type OccasionType = 'casual' | 'office';
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname && window.location.hostname.endsWith('vercel.app') ? 'https://clutus-server.onrender.com' : undefined) || 
-  (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-    ? `http://${window.location.hostname}:5000`
-    : 'http://localhost:5000');
+function getApiBase(): string {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.startsWith('http')) {
+    return envUrl;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Vercel deployment or production domain
+    if (host.endsWith('vercel.app') || (!host.includes('localhost') && !host.includes('127.0.0.1') && !host.startsWith('192.168.') && !host.startsWith('10.'))) {
+      return 'https://clutus-server.onrender.com';
+    }
+    // Local mobile on Wi-Fi
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return `http://${host}:5000`;
+    }
+  }
+  return 'http://localhost:5000';
+}
+
+const API_BASE = getApiBase();
+
+
+
 
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -87,7 +106,7 @@ export default function App() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown connection error';
       console.error('Error fetching garments from server:', msg);
-      setFetchError('Unable to connect to Clutus server. Ensure server is running on port 5000.');
+      setFetchError('Unable to connect to Clutus server. The backend on Render may be waking up from sleep; click Retry.');
     } finally {
       setIsLoading(false);
     }
